@@ -7,10 +7,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "mbr_user")
-public class MbrUserDao {
+@Table(name = "MBR_USER")
+public class MbrUserEntity extends SystemEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "ID", nullable = false)
     private Long id;
 
     private String userId;
