@@ -1,0 +1,68 @@
+spring:
+  cache:
+    type: simple
+    cache-names: farmInfo, permissionsCache, readableGroupCache, gradeMenuCache
+  jpa:
+    hibernate:
+      ddl-auto: update
+      dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    defer-datasource-initialization: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/livecard
+    username: ENC(NW7lqLZVsp1OOnQNvnVzFtYbzX53JlGG484hyXWYILsgH17MjR5iv2hxSOAMtgqR)
+    password: ENC(iOUhKHmiGwV8fEZTSXCyliBdhPrtaoImeXhKZ64LLy29FFaPJ2D0uWHi9jWqz4Zd)
+  sql:
+    init:
+      data-locations: classpath:data.sql
+      mode: never
+  thymeleaf:
+    cache: false
+    mode: HTML5
+    encoding: UTF-8
+    prefix: classpath:/templates/
+    suffix: .html
+    template-resolver-order: 1
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+  devtools:
+    restart:
+      enabled: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 20MB
+
+cloud:
+  aws:
+    s3:
+      bucket: livecard-s3-file
+    region:
+      static: ap-northeast-2
+    credentials:
+      access-key: ENC(m5xE7+xaNvuBgY87OHXr+692MV6+wwY6C34X+GzEsbjDWw4Xylcf3zEhQjp6UsZMUyPyaeE4+fmstGBsaMHnxQ==)
+      secret-key: ENC(4EqdHyXqbvqskc5FYq31RTquoa+vgV08ZM9Pm1fweV+sQvHU1UE5nML0kMiCpWVbIkuD7sEejNOgmWNsB745pbrmvd5RCrVBI3TRByprhos=)
+    stack:
+      auto: false
+
+
+logging:
+  level:
+    sql: debug
+    org.hibernate.orm.jdbc.bind: trace
+    org.springframework.cache: debug
+    org.springframework.security: error
+
+jasypt:
+  encryptor:
+    bean: jasyptEncryptor
+    key: ${JASYPT_ENCRYPTOR_PASSWORD} # 환경변수에 셋팅
+
+
+openweathermap:
+  apikey: ENC(piLXET61N37+ZeoE/vdZpdh5I/eolCgui06boxYj6T9T3y4qotD7UBVtZBu2cl+1xsnUTt1dyWviU6AQEuBncX7t4WT/Izx0MXyapJEwaDU=)

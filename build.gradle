@@ -21,17 +21,95 @@ repositories {
 	mavenCentral()
 }
 
+ext {
+	set('snippetsDir', file("build/generated-snippets")) // 문서 저장위치
+}
+
 dependencies {
+	// spring boot
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web-services'
+	implementation 'org.springframework.boot:spring-boot-devtools'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-logging'
+	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+
+	implementation 'com.h2database:h2:2.2.220'
+	implementation 'com.google.code.gson:gson:2.8.9'
+	implementation 'org.modelmapper:modelmapper:2.4.5'
+
+	// querydsl
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api:3.0.0-M1"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api:3.1.0"
+
+	// lombok
+	compileOnly 'org.projectlombok:lombok:1.18.20'
+	annotationProcessor 'org.projectlombok:lombok:1.18.20'
+
+	// test
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// documnet
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+	implementation 'io.swagger.core.v3:swagger-annotations:2.2.16'
+
+	// Excel
+	implementation 'org.apache.poi:poi:5.2.3'
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
+	implementation 'org.apache.commons:commons-csv:1.8'
+
+	// S3
+	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.4'
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.626'
+
+	// jwt
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+	// database
+	runtimeOnly 'com.mysql:mysql-connector-j:8.2.0'
+
+	// etc
+	implementation 'jakarta.servlet:jakarta.servlet-api:4.0.4'
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.3'
+	implementation group: 'com.github.ulisesbocchio', name: 'jasypt-spring-boot-starter', version: '3.0.5'
+
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+clean {
+	delete file('src/main/generated')
+}
+
+
+test {
+	outputs.dir snippetsDir // 선언한 디렉토리에 생성
+	useJUnitPlatform()
+}
+
+jar {
+	enabled false
+}
+
+bootJar {
+	archiveFileName = "livecard_front.jar"
+}
+
+test {
+	jvmArgs = ["--add-exports=java.base/com.sun.crypto.provider=ALL-UNNAMED"]
+}
+
+bootRun {
+	jvmArgs = ["--add-exports=java.base/com.sun.crypto.provider=ALL-UNNAMED"]
 }
