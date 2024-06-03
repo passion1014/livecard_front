@@ -14,19 +14,15 @@ public class MbrUserEntity extends SystemEntity {
     @Column(name = "ID", nullable = false)
     private Long id;
 
-    private String userId;
-    private String userPw;
-    private String userNm;
-    private String userPhone;
-    private String userEmail;
-    private String userAddr;
-    private String userAddrDetail;
-    private String userZipcode;
-    private String userBirth;
-    private String userGender;
-    private String userGrade;
-    private String userStatus;
-    private String userRegDate;
-    private String userUpdateDate;
-    private String userDelDate;
+    private String userNo;
+    private String email;
+    private String password;
+    private String name;
+    private String profileImgPath;
+    private String profileImgNm;
+    private String profileImgExt;
+    private String profileImgSize; // 프로필 이미지 사이즈
+    private String profileImgType; // 프로필 이미지 타입
+
+
 }

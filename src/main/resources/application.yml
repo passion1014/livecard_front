@@ -14,8 +14,8 @@ spring:
     defer-datasource-initialization: true
   datasource:
     url: jdbc:mysql://localhost:3306/livecard
-    username: ENC(NW7lqLZVsp1OOnQNvnVzFtYbzX53JlGG484hyXWYILsgH17MjR5iv2hxSOAMtgqR)
-    password: ENC(iOUhKHmiGwV8fEZTSXCyliBdhPrtaoImeXhKZ64LLy29FFaPJ2D0uWHi9jWqz4Zd)
+    username: root #ENC(NW7lqLZVsp1OOnQNvnVzFtYbzX53JlGG484hyXWYILsgH17MjR5iv2hxSOAMtgqR)
+    password: #ENC(iOUhKHmiGwV8fEZTSXCyliBdhPrtaoImeXhKZ64LLy29FFaPJ2D0uWHi9jWqz4Zd)
   sql:
     init:
       data-locations: classpath:data.sql
@@ -45,8 +45,8 @@ cloud:
     region:
       static: ap-northeast-2
     credentials:
-      access-key: ENC(m5xE7+xaNvuBgY87OHXr+692MV6+wwY6C34X+GzEsbjDWw4Xylcf3zEhQjp6UsZMUyPyaeE4+fmstGBsaMHnxQ==)
-      secret-key: ENC(4EqdHyXqbvqskc5FYq31RTquoa+vgV08ZM9Pm1fweV+sQvHU1UE5nML0kMiCpWVbIkuD7sEejNOgmWNsB745pbrmvd5RCrVBI3TRByprhos=)
+      access-key: 111 #ENC(m5xE7+xaNvuBgY87OHXr+692MV6+wwY6C34X+GzEsbjDWw4Xylcf3zEhQjp6UsZMUyPyaeE4+fmstGBsaMHnxQ==)
+      secret-key: 111 #ENC(4EqdHyXqbvqskc5FYq31RTquoa+vgV08ZM9Pm1fweV+sQvHU1UE5nML0kMiCpWVbIkuD7sEejNOgmWNsB745pbrmvd5RCrVBI3TRByprhos=)
     stack:
       auto: false
 
@@ -61,8 +61,4 @@ logging:
 jasypt:
   encryptor:
     bean: jasyptEncryptor
-    key: ${JASYPT_ENCRYPTOR_PASSWORD} # 환경변수에 셋팅
-
-
-openweathermap:
-  apikey: ENC(piLXET61N37+ZeoE/vdZpdh5I/eolCgui06boxYj6T9T3y4qotD7UBVtZBu2cl+1xsnUTt1dyWviU6AQEuBncX7t4WT/Izx0MXyapJEwaDU=)
+    key: abc12345 #${JASYPT_ENCRYPTOR_PASSWORD}
