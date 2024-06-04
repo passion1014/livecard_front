@@ -1,6 +1,6 @@
 package com.livecard.front.common.type;
 
-import com.livecard.front.domain.entity.CmnTypeEntity;
+import com.livecard.front.domain.entity.CmnCommonCodeEntity;
 import com.livecard.front.domain.repository.CmnTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,8 +14,8 @@ public class TypeServiceImpl implements TypeService{
     private final CmnTypeRepository cmnTypeRepository;
 
     @Override
-    public Optional<List<CmnTypeEntity>> searchActiveType(String type) {
-        List<CmnTypeEntity> cmnTypeEntities = cmnTypeRepository.findByTypeTypeAndStatus(type,'Y');
+    public Optional<List<CmnCommonCodeEntity>> searchActiveType(String type) {
+        List<CmnCommonCodeEntity> cmnTypeEntities = cmnTypeRepository.findByTypeTypeAndStatus(type,'Y');
         return Optional.of(cmnTypeEntities);
     }
 }

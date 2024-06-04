@@ -1,8 +1,13 @@
 package com.livecard.front.domain.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,15 +19,19 @@ public class MbrUserEntity extends SystemEntity {
     @Column(name = "ID", nullable = false)
     private Long id;
 
-    private String userNo;
-    private String email;
-    private String password;
-    private String name;
-    private String profileImgPath;
-    private String profileImgNm;
-    private String profileImgExt;
-    private String profileImgSize; // 프로필 이미지 사이즈
-    private String profileImgType; // 프로필 이미지 타입
+    @Column(name = "SOCIAL_ID", length = 50)
+    private String socialId; // 소셜 ID
 
+    @Column(name = "NAME", length = 50)
+    private String name; // 이름
 
+    @Column(name = "PROVIDER", length = 50)
+    private String provider; // 제공자 (예: GOOGLE, FACEBOOK 등)
+
+    @Column(name = "ROLE", length = 50)
+    private String role; // 역할
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "mbrUserEntity")
+    @ToString.Exclude
+    private List<MbrUserProfileEntity> mbrUserProfileEntity;
 }
