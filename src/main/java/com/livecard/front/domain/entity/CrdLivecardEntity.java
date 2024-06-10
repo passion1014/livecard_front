@@ -33,9 +33,11 @@ public class CrdLivecardEntity extends SystemEntity {
     @Column(name = "CONTENT", nullable = false, columnDefinition = "LONGTEXT")
     private String content;
 
+
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CMN_TEMPLATE_ID")
-    private CmnTemplateEntity cmnTemplateEntity;
+    private CmnLivecardTemplateEntity cmnLivecardTemplateEntity;
 
     @OneToMany(fetch = FetchType.LAZY)
     private List<CrdMediaEntity> crdMediaEntity; // 해당 라이브카드에서 사용한 미디어 목록

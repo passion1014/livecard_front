@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "CMN_TEMPLATE")
-public class CmnTemplateEntity extends SystemEntity {
+@Table(name = "CMN_LIVECARD_TEMPLATE")
+public class CmnLivecardTemplateEntity extends SystemEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ID", nullable = false)
@@ -21,7 +21,7 @@ public class CmnTemplateEntity extends SystemEntity {
     // 템플릿타입
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "TEMPLATE_TYPE_ID")
-    private CmnTemplateTypeEntity cmnTemplateTypeEntity;
+    private CmnLivecardTemplateTypeEntity cmnLivecardTemplateTypeEntity;
 
     // 템플릿내용 (html소스코드가 들어간다)
     @Column(name = "CONTENT", nullable = false, columnDefinition = "LONGTEXT")

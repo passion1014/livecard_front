@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "CMN_TEMPLATE_TYPE")
-public class CmnTemplateTypeEntity extends SystemEntity {
+@Table(name = "CMN_LIVECARD_TEMPLATE_TYPE")
+public class CmnLivecardTemplateTypeEntity extends SystemEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ID", nullable = false)
