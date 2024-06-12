@@ -1,7 +1,7 @@
 spring:
-  cache:
-    type: simple
-    cache-names: farmInfo, permissionsCache, readableGroupCache, gradeMenuCache
+#  cache:
+#    type: simple
+#    cache-names: farmInfo, permissionsCache, readableGroupCache, gradeMenuCache
   jpa:
     hibernate:
       ddl-auto: update
@@ -19,7 +19,7 @@ spring:
   sql:
     init:
       data-locations: classpath:data.sql
-      mode: never
+      mode: always
   thymeleaf:
     cache: false
     mode: HTML5

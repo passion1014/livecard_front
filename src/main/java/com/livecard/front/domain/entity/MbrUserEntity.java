@@ -34,4 +34,7 @@ public class MbrUserEntity extends SystemEntity {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "mbrUserEntity")
     @ToString.Exclude
     private List<MbrUserProfileEntity> mbrUserProfileEntity;
+
+//    @OneToOne(fetch = FetchType.LAZY, mappedBy = "mbrUserEntity")
+//    private AstUserBalanceEntity mbrUserEntity;
 }
