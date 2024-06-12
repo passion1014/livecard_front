@@ -83,6 +83,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests( (authorizeRequest) -> authorizeRequest
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/", "/login", "/mobile/login").permitAll()
+                        .requestMatchers("/api/**").permitAll() // 임시
                         .requestMatchers("/member/findPass", "/mobile/member/findPass","/api/member/findPass").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/test/**").permitAll()
