@@ -2,8 +2,14 @@ package com.livecard.front.common;
 
 import com.livecard.front.common.security.CustomAuthenticationFilter;
 import com.livecard.front.common.security.CustomPortFilter;
+import com.livecard.front.common.security.oauth.OAuth2AuthorizationRequestBasedOnCookieRepository;
+import com.livecard.front.common.security.oauth.OAuth2SuccessHandler;
+import com.livecard.front.common.security.oauth.OAuth2UserCustomService;
+import com.livecard.front.common.security.oauth.TokenProvider;
 import com.livecard.front.common.util.CommUtil;
 //import com.livecard.front.member.service.CustomUserDetailServiceImpl;
+import com.livecard.front.domain.repository.RefreshTokenRepository;
+import com.livecard.front.member.service.MemberService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -27,6 +33,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Arrays;
 
@@ -35,6 +42,14 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 //    private final CustomUserDetailServiceImpl customUserDetailService;
+
+    private final OAuth2UserCustomService oAuth2UserCustomService;
+    private final TokenProvider tokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final MemberService memberService;
+
+
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(); // BCrypt 암호화
@@ -64,33 +79,20 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-
-
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions(
                         HeadersConfigurer.FrameOptionsConfig::disable
                 ))
-                .sessionManagement((sessionManagement) -> sessionManagement
-                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
-                        .sessionConcurrency(concurrencyControlConfigurer ->
-                                concurrencyControlConfigurer
-                                        .maximumSessions(1) // 한 사용자당 최대 세션 수
-                                        .expiredUrl("/login?expired") // 세션이 만료된 경우 리디렉션할 URL
-                                        .maxSessionsPreventsLogin(true) // 새 세션 로그인 차단 여부
-                        )
-                )
+                .httpBasic(AbstractHttpConfigurer::disable) //기본인증 미사용
+                .formLogin(AbstractHttpConfigurer::disable) //스프링시큐리트 내장 폼로그인 미사용
+                .logout(AbstractHttpConfigurer::disable)
+                //세션 사용하지 않음
+                .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests( (authorizeRequest) -> authorizeRequest
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                        .requestMatchers("/", "/login", "/mobile/login").permitAll()
-                        .requestMatchers("/api/**").permitAll() // 임시
-                        .requestMatchers("/member/findPass", "/mobile/member/findPass","/api/member/findPass").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/test/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/error/**").permitAll() // '/error' 경로에 대한 접근 허용
-                        .requestMatchers("/css/**","/js/**","/images/**", "/vendor/**").permitAll() // '/정적 recource' 경로에 대한 접근 허용
-                        .requestMatchers("/mobile/css/**","/mobile/js/**","/mobile/images/**").permitAll() // '/정적 recource' 경로에 대한 접근 허용
+                        .requestMatchers("/api/token").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling( (exceptionConfig) -> exceptionConfig
@@ -99,24 +101,17 @@ public class SecurityConfig {
                 )
                 .addFilterAfter(new SecurityContextPersistenceFilter(), CustomAuthenticationFilter.class)
                 .addFilterBefore(new CustomPortFilter(), UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .authorizationEndpoint(authorizationEndpoint -> authorizationEndpoint.authorizationRequestRepository(oAuth2AuthorizationRequestBasedOnCookieRepository()))
+                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(oAuth2UserCustomService))
+                        .successHandler(oAuth2SuccessHandler())
+                )
 //                .addFilterBefore(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                // 기타 설정...
-                // 401 403 관련 예외처리
-//                .formLogin((formLogin) -> formLogin
-//                        .loginPage("/login")
-//                        .usernameParameter("username")
-//                        .passwordParameter("password")
-//                        .loginProcessingUrl("/auth/authenticate")
-//                        .defaultSuccessUrl("/", true)
-//                ) // 로그인
-                .logout((logout) -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                ) // 로그아웃
+
 //                .addFilter()
 //                .userDetailsService(customUserDetailService)
+
                 .build();
         /*
         JWT 인증 방식 적용
@@ -140,6 +135,19 @@ public class SecurityConfig {
          */
     }
 
+    @Bean
+    public OAuth2SuccessHandler oAuth2SuccessHandler() {
+        return new OAuth2SuccessHandler(tokenProvider,
+                refreshTokenRepository,
+                oAuth2AuthorizationRequestBasedOnCookieRepository(),
+                memberService
+        );
+    }
+
+    @Bean
+    public OAuth2AuthorizationRequestBasedOnCookieRepository oAuth2AuthorizationRequestBasedOnCookieRepository() {
+        return new OAuth2AuthorizationRequestBasedOnCookieRepository();
+    }
 
 
     public final AuthenticationEntryPoint unauthorizedEntryPoint =
@@ -165,3 +173,4 @@ public class SecurityConfig {
         private final String message;
     }
 }
+
