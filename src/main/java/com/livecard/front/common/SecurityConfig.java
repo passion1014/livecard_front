@@ -2,10 +2,7 @@ package com.livecard.front.common;
 
 import com.livecard.front.common.security.CustomAuthenticationFilter;
 import com.livecard.front.common.security.CustomPortFilter;
-import com.livecard.front.common.security.oauth.OAuth2AuthorizationRequestBasedOnCookieRepository;
-import com.livecard.front.common.security.oauth.OAuth2SuccessHandler;
-import com.livecard.front.common.security.oauth.OAuth2UserCustomService;
-import com.livecard.front.common.security.oauth.TokenProvider;
+import com.livecard.front.common.security.oauth.*;
 import com.livecard.front.common.util.CommUtil;
 //import com.livecard.front.member.service.CustomUserDetailServiceImpl;
 import com.livecard.front.domain.repository.RefreshTokenRepository;
@@ -88,12 +85,19 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable) //스프링시큐리트 내장 폼로그인 미사용
                 .logout(AbstractHttpConfigurer::disable)
                 //세션 사용하지 않음
+                .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests( (authorizeRequest) -> authorizeRequest
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/token").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/token").permitAll()
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .authorizationEndpoint(authorizationEndpoint -> authorizationEndpoint.authorizationRequestRepository(oAuth2AuthorizationRequestBasedOnCookieRepository()))
+                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(oAuth2UserCustomService))
+                        .successHandler(oAuth2SuccessHandler())
                 )
                 .exceptionHandling( (exceptionConfig) -> exceptionConfig
                         .authenticationEntryPoint(unauthorizedEntryPoint)
@@ -101,12 +105,7 @@ public class SecurityConfig {
                 )
                 .addFilterAfter(new SecurityContextPersistenceFilter(), CustomAuthenticationFilter.class)
                 .addFilterBefore(new CustomPortFilter(), UsernamePasswordAuthenticationFilter.class)
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .authorizationEndpoint(authorizationEndpoint -> authorizationEndpoint.authorizationRequestRepository(oAuth2AuthorizationRequestBasedOnCookieRepository()))
-                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(oAuth2UserCustomService))
-                        .successHandler(oAuth2SuccessHandler())
-                )
+
 //                .addFilterBefore(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 
 //                .addFilter()
@@ -133,6 +132,11 @@ public class SecurityConfig {
                 .addFilterBefore(new JwtFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class)
                 .build();
          */
+    }
+
+    @Bean
+    public TokenAuthenticationFilter tokenAuthenticationFilter() {
+        return new TokenAuthenticationFilter(tokenProvider);
     }
 
     @Bean

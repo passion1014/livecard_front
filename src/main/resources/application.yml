@@ -57,19 +57,20 @@ spring:
             client-id: 067fc1214d98bfce4fb253f0526b866a
             client-secret: zBKRRTiyb3CFHYjDJ7flBeKE6cDnvbGa
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:3000/loginCallback?provider=kakao"
-            scope: email,profile
+            redirect-uri: http://localhost:3000/loginCallback?provider=kakao
+            #scope: email,profile
+            scope: profile_nickname,profile_image
           naver:
             client-id: 9ptmkmJuk85BeO1Qjlj4
             client-secret: 08I1VhePzc
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:3000/loginCallback?provider=naver"
+            redirect-uri: http://localhost:3000/loginCallback?provider=naver
             scope: email,profile
           google:
             client-id: 435968168172-5gq1u0vb3e36bu4rgusrk6beltjf6r7l.apps.googleusercontent.com
             client-secret: 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
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:3000/loginCallback?provider=google"
+            redirect-uri: http://localhost:3000/loginCallback?provider=google
             scope: email,profile
 
 jwt:
