@@ -55,26 +55,26 @@ spring:
         registration:
           kakao:
             client-id: 067fc1214d98bfce4fb253f0526b866a
-            client-secret: zBKRRTiyb3CFHYjDJ7flBeKE6cDnvbGa
+            client-secret:
             authorization-grant-type: authorization_code
             redirect-uri: "http://localhost:3000/loginCallback?provider=kakao"
             scope: email,profile
           naver:
             client-id: 9ptmkmJuk85BeO1Qjlj4
-            client-secret: 08I1VhePzc
+            client-secret:
             authorization-grant-type: authorization_code
             redirect-uri: "http://localhost:3000/loginCallback?provider=naver"
             scope: email,profile
           google:
             client-id: 435968168172-5gq1u0vb3e36bu4rgusrk6beltjf6r7l.apps.googleusercontent.com
-            client-secret: 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
+            client-secret:
             authorization-grant-type: authorization_code
             redirect-uri: "http://localhost:3000/loginCallback?provider=google"
             scope: email,profile
 
 jwt:
   issuer: issuer@gmail.com
-  secret-key: 462D4A614E645266556A586E3212357538782F313F4428472B4B625065536856
+  secret-key:
   expiration: 60000 # 86400000 # 1 day
   refresh-token:
     expiration: 604800000 # 7 days
