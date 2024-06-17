@@ -17,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Component
@@ -25,7 +26,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
     public static final Duration REFRESH_TOKEN_DURATION = Duration.ofDays(14);
     public static final Duration ACCESS_TOKEN_DURATION = Duration.ofDays(1);
-    public static final String REDIRECT_PATH = "";
+
+    //TODO:개발기/운영기 주소 설정
+    public static final String REDIRECT_PATH = "http://localhost:3000/loginCallback";
 
     private final TokenProvider tokenProvider;
     private final MbrUserRepository mbrUserRepository;
@@ -36,23 +39,35 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        String socialId = "";
+        Map<String, Object> responseAttribute = oAuth2User.getAttribute("response");
+        String socialId = null;
+        if (responseAttribute == null) {
+            socialId = oAuth2User.getName();
+        }
+        else {
+            socialId = (String) responseAttribute.get("id");
+        }
 
         //TODO: throw 처리
         MbrUserEntity user = mbrUserRepository.findBySocialId(socialId).orElseThrow();
 
         //Refresh Token을 DB에 저장
         String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION);
-        saveRefreshToken(user.getSocialId(), refreshToken);
+        this.saveRefreshToken(user.getSocialId(), refreshToken);
 
         // Refresh Token을 cookie로 보내기
-        addRefreshTokenToCookie(request, response, refreshToken);
-
-        String accessToken = tokenProvider.generateToken(user, ACCESS_TOKEN_DURATION);
-        String targetUrl = getTargetUrl(accessToken);
+        this.addRefreshTokenToCookie(request, response, refreshToken);
 
         clearAuthenticationAttributes(request, response);
 
+        //==============================
+        // 페이지 리다이렉트
+        //==============================
+        String accessToken = tokenProvider.generateToken(user, ACCESS_TOKEN_DURATION);
+        String targetUrl =  UriComponentsBuilder.fromUriString(REDIRECT_PATH)
+                .queryParam("token", accessToken)
+                .build()
+                .toUriString();
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
@@ -75,10 +90,5 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         authorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
     }
 
-    private String getTargetUrl(String token) {
-        return UriComponentsBuilder.fromUriString(REDIRECT_PATH)
-                .queryParam("token", token)
-                .build()
-                .toUriString();
-    }
+
 }
