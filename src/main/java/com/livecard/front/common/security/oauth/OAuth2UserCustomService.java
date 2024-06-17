@@ -4,7 +4,7 @@ package com.livecard.front.common.security.oauth;
 import com.livecard.front.domain.entity.MbrUserEntity;
 import com.livecard.front.domain.repository.MbrUserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -21,26 +21,75 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        String provider = userRequest.getClientRegistration().getRegistrationId();
         OAuth2User user = super.loadUser(userRequest); // ❶ 요청을 바탕으로 유저 정보를 담은 객체 반환
-        saveOrUpdate(user);
+        saveOrUpdate(user, provider);
 
         return user;
     }
 
     // ❷ 유저가 있으면 업데이트, 없으면 유저 생성
-    private MbrUserEntity saveOrUpdate(OAuth2User oAuth2User) {
-        Map<String, Object> attributes = oAuth2User.getAttributes();
+    private MbrUserEntity saveOrUpdate(OAuth2User oAuth2User, String provider) {
+        String socialId = "";
+        String name ;
+        String profileImage;
+        String providerCd = null;
 
-        String email = (String) attributes.get("email");
-        String name = (String) attributes.get("name");
+        //================================================
+        // Provider 별로 프로필 정보 획득
+        //================================================
+        if (Provider.KAKAO.getName().equals(provider)) {
+            Map<String, Object> properties = oAuth2User.getAttribute("properties");
+            long id = oAuth2User.getAttribute("id");
+            socialId = String.valueOf(id);
+            name = (String)properties.get("nickname");
+            profileImage = (String)properties.get("profile_image");
+            providerCd = "0";
+        }
+        else if (Provider.NAVER.getName().equals(provider)) {
+            Map<String, Object> attributes =  oAuth2User.getAttributes();
+            Map<String, Object> response = (Map<String, Object>) attributes.get("response");;
 
-//        User user = mbrUserRepository.findByEmail(email)
-//                .map(entity -> entity.update(name))
-//                .orElse(User.builder()
-//                        .email(email)
-//                        .nickname(name)
-//                        .build());
+            socialId = (String) response.get("id");
+            profileImage = (String) response.get("profile_image");
+            name = (String) response.get("name");
+            providerCd = "1";
+        }
+        else if (Provider.GOOGLE.getName().equals(provider)) {
+            Map<String, Object> attributes = oAuth2User.getAttributes();
+            socialId = oAuth2User.getAttribute("sub");
+            name = oAuth2User.getAttribute("name");
+            profileImage = oAuth2User.getAttribute("picture");
+            providerCd = "2";
+        } else {
+            profileImage = null;
+            name = null;
+        }
 
-        return mbrUserRepository.save(new MbrUserEntity());
+        //================================================
+        // 프로필 정보 Insert or Update
+        //================================================
+        if (StringUtils.isEmpty(socialId)) {
+            //TODO: throw
+            throw new OAuth2AuthenticationException("인증오류");
+        }
+        else {
+            MbrUserEntity user = mbrUserRepository.findBySocialId(socialId)
+                    //User user = mbrUserRepository.findByEmail(email)
+                    .map(entity -> {
+                                entity.setName(name);
+                                entity.setProfileImg(profileImage);
+                                return entity;
+                            }
+                    )
+                    .orElse(MbrUserEntity.builder()
+                            .socialId(socialId)
+                            .name(name)
+                            .role("User")
+                            .providerCd(providerCd)
+                            .profileImg(profileImage)
+                            .build());
+            return mbrUserRepository.save(user);
+        }
     }
 }

@@ -49,7 +49,7 @@ public class MemberServiceImpl implements MemberService {
                 .id(mbrUserEntity.getId())
                 .socialId(mbrUserEntity.getSocialId())
                 .name(mbrUserEntity.getName())
-                .provider(mbrUserEntity.getProvider())
+                .providerCd(mbrUserEntity.getProviderCd())
                 .role(mbrUserEntity.getRole())
                 .build();
     }

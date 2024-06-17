@@ -5,8 +5,8 @@ import com.livecard.front.common.security.CustomPortFilter;
 import com.livecard.front.common.security.oauth.*;
 import com.livecard.front.common.util.CommUtil;
 //import com.livecard.front.member.service.CustomUserDetailServiceImpl;
+import com.livecard.front.domain.repository.MbrUserRepository;
 import com.livecard.front.domain.repository.RefreshTokenRepository;
-import com.livecard.front.member.service.MemberService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -25,12 +25,14 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Arrays;
 
@@ -39,13 +41,12 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 //    private final CustomUserDetailServiceImpl customUserDetailService;
-
     private final OAuth2UserCustomService oAuth2UserCustomService;
     private final TokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final MemberService memberService;
-
-
+    //private final MemberService memberService;
+    private final ClientRegistrationRepository clientRegistrationRepository;
+    private final MbrUserRepository mbrUserRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -89,12 +90,14 @@ public class SecurityConfig {
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests( (authorizeRequest) -> authorizeRequest
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                        .requestMatchers("/error/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/**", "/api/token").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
+                        .clientRegistrationRepository(clientRepository())
+                        //.loginPage("/login")
                         .authorizationEndpoint(authorizationEndpoint -> authorizationEndpoint.authorizationRequestRepository(oAuth2AuthorizationRequestBasedOnCookieRepository()))
                         .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(oAuth2UserCustomService))
                         .successHandler(oAuth2SuccessHandler())
@@ -112,27 +115,8 @@ public class SecurityConfig {
 //                .userDetailsService(customUserDetailService)
 
                 .build();
-        /*
-        JWT 인증 방식 적용
-        return httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler(jwtAccessDeniedHandler)
-                )
-                .authorizeHttpRequests(
-                        authorize -> authorize.anyRequest().authenticated()
-//                        (authorizeHttpRequests) -> authorizeHttpRequests.requestMatchers("/**").hasRole("USER")
-                )
-                // [로그인 방식에 대한 설정]
-                // .httpBasic(Customizer.withDefaults()) // dialog box
-                // .formLogin(Customizer.withDefaults()) // default login page
-                .formLogin(form -> form.loginPage("/user/login").permitAll()) // login page
-                .logout(logout -> logout.logoutSuccessUrl("/"))
-                .addFilterBefore(new JwtFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class)
-                .build();
-         */
     }
+
 
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
@@ -142,9 +126,9 @@ public class SecurityConfig {
     @Bean
     public OAuth2SuccessHandler oAuth2SuccessHandler() {
         return new OAuth2SuccessHandler(tokenProvider,
+                mbrUserRepository,
                 refreshTokenRepository,
-                oAuth2AuthorizationRequestBasedOnCookieRepository(),
-                memberService
+                oAuth2AuthorizationRequestBasedOnCookieRepository()
         );
     }
 
@@ -176,5 +160,22 @@ public class SecurityConfig {
         private final HttpStatus status;
         private final String message;
     }
+
+    private ClientRegistrationRepository clientRepository() {
+        return new InMemoryClientRegistrationRepository(kakaoClientRegistration(), naverClientRegistration(), googleClientRegistration());
+    }
+
+    private ClientRegistration kakaoClientRegistration() {
+        return clientRegistrationRepository.findByRegistrationId(Provider.KAKAO.getName());
+    }
+
+    private ClientRegistration naverClientRegistration() {
+        return clientRegistrationRepository.findByRegistrationId(Provider.NAVER.getName());
+    }
+
+    private ClientRegistration googleClientRegistration() {
+        return clientRegistrationRepository.findByRegistrationId(Provider.GOOGLE.getName());
+    }
+
 }
 

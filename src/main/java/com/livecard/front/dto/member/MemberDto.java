@@ -24,7 +24,7 @@ public class MemberDto implements Serializable {
     private Long id;
     private String socialId; // 소셜 ID
     private String name; // 이름
-    private String provider; // 제공자 (예: GOOGLE, FACEBOOK 등)
+    private String providerCd; // 제공자 (예: GOOGLE, FACEBOOK 등)
     private String role; // 역할
 
     private List<MemberProfileDto> memberProfileDto;

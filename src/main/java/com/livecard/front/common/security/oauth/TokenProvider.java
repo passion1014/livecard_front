@@ -39,7 +39,7 @@ public class TokenProvider {
                 .setIssuer(issuer)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                //.setSubject(user.getEmail())
+                .setSubject(user.getSocialId()) //TODO:확인
                 .claim("id", user.getId())
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
@@ -49,8 +49,8 @@ public class TokenProvider {
         try {
             Jwts.parser()
                     .setSigningKey(secretKey)
-                    //.parseClaimsJws(token)
-;
+                    .build()
+                    .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
