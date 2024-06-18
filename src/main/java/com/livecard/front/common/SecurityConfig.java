@@ -1,10 +1,7 @@
 package com.livecard.front.common;
 
-import com.livecard.front.common.security.CustomAuthenticationFilter;
-import com.livecard.front.common.security.CustomPortFilter;
 import com.livecard.front.common.security.oauth.*;
 import com.livecard.front.common.util.CommUtil;
-//import com.livecard.front.member.service.CustomUserDetailServiceImpl;
 import com.livecard.front.domain.repository.MbrUserRepository;
 import com.livecard.front.domain.repository.RefreshTokenRepository;
 import lombok.Getter;
@@ -33,6 +30,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Arrays;
 
@@ -66,28 +64,25 @@ public class SecurityConfig {
         return new ProviderManager(Arrays.asList(provider));
     }
 
-    @Bean
-    public CustomAuthenticationFilter customAuthenticationFilter() throws Exception {
-        CustomAuthenticationFilter filter = new CustomAuthenticationFilter(authenticationManagerBean());
-        filter.setFilterProcessesUrl("/auth/authenticate"); // 로그인 경로 설정
-        // 필터에 필요한 추가 설정 (예: setFilterProcessesUrl 등)
-        return filter;
-    }
+//    @Bean
+//    public CustomAuthenticationFilter customAuthenticationFilter() throws Exception {
+//        CustomAuthenticationFilter filter = new CustomAuthenticationFilter(authenticationManagerBean());
+//        filter.setFilterProcessesUrl("/auth/authenticate"); // 로그인 경로 설정
+//        // 필터에 필요한 추가 설정 (예: setFilterProcessesUrl 등)
+//        return filter;
+//    }
 
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers.frameOptions(
-                        HeadersConfigurer.FrameOptionsConfig::disable
-                ))
                 .httpBasic(AbstractHttpConfigurer::disable) //기본인증 미사용
                 .formLogin(AbstractHttpConfigurer::disable) //스프링시큐리트 내장 폼로그인 미사용
                 .logout(AbstractHttpConfigurer::disable)
                 //세션 사용하지 않음
-                .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests( (authorizeRequest) -> authorizeRequest
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/error/**").permitAll()
@@ -106,8 +101,9 @@ public class SecurityConfig {
                         .authenticationEntryPoint(unauthorizedEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
-                .addFilterAfter(new SecurityContextPersistenceFilter(), CustomAuthenticationFilter.class)
-                .addFilterBefore(new CustomPortFilter(), UsernamePasswordAuthenticationFilter.class)
+                //TODO: 아래 2개 확인 뭔지 모르지만
+//                .addFilterAfter(new SecurityContextPersistenceFilter(), CustomAuthenticationFilter.class)
+//                .addFilterBefore(new CustomPortFilter(), UsernamePasswordAuthenticationFilter.class)
 
 //                .addFilterBefore(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 

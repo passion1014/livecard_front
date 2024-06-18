@@ -23,7 +23,10 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         String provider = userRequest.getClientRegistration().getRegistrationId();
         OAuth2User user = super.loadUser(userRequest); // ❶ 요청을 바탕으로 유저 정보를 담은 객체 반환
+
         saveOrUpdate(user, provider);
+
+
 
         return user;
     }

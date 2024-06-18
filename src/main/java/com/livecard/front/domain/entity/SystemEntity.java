@@ -42,7 +42,8 @@ public class SystemEntity {
 //        String memberId = SessionUtil.getMemberId();
         String memberId;
         try {
-            memberId = SessionUtil.getMemberId();
+            //memberId = SessionUtil.getMemberId(); //TODO:
+            memberId = "system";
         } catch (Exception e) {
             memberId = "system"; // 세션 정보가 없는 경우 기본값으로 설정
         }
@@ -58,7 +59,8 @@ public class SystemEntity {
 //        String memberId = SessionUtil.getMemberId();
         String memberId;
         try {
-            memberId = SessionUtil.getMemberId();
+            //memberId = SessionUtil.getMemberId();
+            memberId = "system"; //TODO:
         } catch (Exception e) {
             memberId = "system"; // 세션 정보가 없는 경우 기본값으로 설정
         }

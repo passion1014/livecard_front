@@ -1,6 +1,8 @@
 package com.livecard.front.common.security.oauth;
 
+import com.livecard.front.common.security.CustomUserDetails;
 import com.livecard.front.domain.entity.MbrUserEntity;
+import com.livecard.front.domain.repository.MbrUserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
@@ -8,6 +10,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -25,6 +28,8 @@ public class TokenProvider {
     String secretKey;
     @Value("${jwt.issuer}")
     String issuer;
+
+    private final MbrUserRepository mbrUserRepository;
 
     public String generateToken(MbrUserEntity user, Duration expiredAt) {
         Date now = new Date();
@@ -60,10 +65,23 @@ public class TokenProvider {
 
     public Authentication getAuthentication(String token) {
         Claims claims = getClaims(token);
-        Set<SimpleGrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        //Set<SimpleGrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+//        return new UsernamePasswordAuthenticationToken(new org.springframework.security.core.userdetails.User(claims.getSubject(), "", authorities)
+//                , token
+//                , authorities);
 
-        return new UsernamePasswordAuthenticationToken(new org.springframework.security.core.userdetails.User(claims.getSubject
-                (), "", authorities), token, authorities);
+
+        CustomUserDetails customUserDetails = new CustomUserDetails(claims.getSubject(), authorities.stream().toList());
+
+        //TODO: throw하기
+        MbrUserEntity user = mbrUserRepository.findBySocialId(claims.getSubject()).orElseThrow();
+        customUserDetails.setMemberName(user.getName());
+        customUserDetails.setId(user.getId());
+        customUserDetails.setProviderCd(user.getProviderCd());
+        customUserDetails.setProfileImg(user.getProfileImg());
+
+        return new UsernamePasswordAuthenticationToken(customUserDetails, token, authorities);
     }
 
     public Long getUserId(String token) {

@@ -41,7 +41,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         Map<String, Object> responseAttribute = oAuth2User.getAttribute("response");
         String socialId = null;
-        if (responseAttribute == null) {
+        if (responseAttribute == null) { //naver
             socialId = oAuth2User.getName();
         }
         else {
@@ -51,12 +51,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         //TODO: throw 처리
         MbrUserEntity user = mbrUserRepository.findBySocialId(socialId).orElseThrow();
 
-        //Refresh Token을 DB에 저장
-        String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION);
-        this.saveRefreshToken(user.getSocialId(), refreshToken);
 
-        // Refresh Token을 cookie로 보내기
-        this.addRefreshTokenToCookie(request, response, refreshToken);
+        //==============================
+        // Refresh-token 처리
+        //==============================
+        String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION); //토큰생성
+        this.saveRefreshToken(user.getSocialId(), refreshToken); //토큰을 DB에 저장
+        this.addRefreshTokenToCookie(request, response, refreshToken); // 토큰을 cookie로 보내기
 
         clearAuthenticationAttributes(request, response);
 
