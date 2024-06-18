@@ -8,4 +8,11 @@ public interface MemberService {
     Long getMemberId(String socialId);
 
     Optional<MemberDto> getMemberDetailBySocial(String socialId);
+
+
+
+
+
+
+
 }

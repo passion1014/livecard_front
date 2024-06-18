@@ -10,7 +10,6 @@ public class ResultWrapper<T> {
     private T data;
 
     public static <T> ResultWrapper<T> success(T data) {
-
         return ResultWrapper.<T>builder()
                 .code(ResultCode.R1000)
                 .data(data)
