@@ -1,6 +1,7 @@
 package com.livecard.front.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@Builder
 @Table(name = "CRD_LIVECARD")
 public class CrdLivecardEntity extends SystemEntity {
     @Id
@@ -32,8 +34,6 @@ public class CrdLivecardEntity extends SystemEntity {
     // 템플릿내용 (html소스코드가 들어간다)
     @Column(name = "CONTENT", nullable = false, columnDefinition = "LONGTEXT")
     private String content;
-
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CMN_TEMPLATE_ID")
