@@ -35,6 +35,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final RefreshTokenRepository refreshTokenRepository;
     private final OAuth2AuthorizationRequestBasedOnCookieRepository authorizationRequestRepository;
 
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
@@ -56,7 +57,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // Refresh-token 처리
         //==============================
         String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION); //토큰생성
-        this.saveRefreshToken(user.getSocialId(), refreshToken); //토큰을 DB에 저장
+        this.saveRefreshToken(user.getId(), refreshToken); //토큰을 DB에 저장
         this.addRefreshTokenToCookie(request, response, refreshToken); // 토큰을 cookie로 보내기
 
         clearAuthenticationAttributes(request, response);
@@ -72,10 +73,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
-    private void saveRefreshToken(String socialId, String newRefreshToken) {
-        RefreshToken refreshToken = refreshTokenRepository.findBySocialId(socialId)
+    private void saveRefreshToken(Long userId, String newRefreshToken) {
+        RefreshToken refreshToken = refreshTokenRepository.findByMbrUserId(userId)
                 .map(entity -> entity.update(newRefreshToken))
-                .orElse(new RefreshToken(socialId, newRefreshToken));
+                .orElse(new RefreshToken(userId, newRefreshToken));
         refreshTokenRepository.save(refreshToken);
     }
 
