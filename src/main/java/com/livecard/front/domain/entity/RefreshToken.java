@@ -19,7 +19,7 @@ public class RefreshToken {
     private Long mbrUserId;
 
 
-    @Column(name = "refresh_token", nullable = false)
+    @Column(name = "REFRESH_TOKEN", nullable = false)
     private String refreshToken;
 
     public RefreshToken(Long mbrUserId, String refreshToken) {
