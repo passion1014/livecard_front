@@ -4,7 +4,7 @@ import com.livecard.front.common.util.CookieUtil;
 import com.livecard.front.domain.entity.MbrUserEntity;
 import com.livecard.front.domain.entity.OauthToken;
 import com.livecard.front.domain.repository.MbrUserRepository;
-import com.livecard.front.domain.repository.RefreshTokenRepository;
+import com.livecard.front.domain.repository.OauthTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +12,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -36,7 +34,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final TokenProvider tokenProvider;
     private final MbrUserRepository mbrUserRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final OauthTokenRepository oauthTokenRepository;
     private final OAuth2AuthorizationRequestBasedOnCookieRepository authorizationRequestRepository;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
 
@@ -55,45 +53,48 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         //TODO: throw 처리
         MbrUserEntity user = mbrUserRepository.findBySocialId(socialId).orElseThrow();
 
-        //=================================
-        // Access-token, Refresh-token 조회
-        //=================================
-        //String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION); //토큰생성
+        //===========================================
+        // provider의 Access-token / Refresh-token 조회
+        //===========================================
         OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
         String clientRegistrationId = oauthToken.getAuthorizedClientRegistrationId();
         String principalName = oauthToken.getName();
-
         OAuth2AuthorizedClient client = oAuth2AuthorizedClientService.loadAuthorizedClient(clientRegistrationId, principalName);
-        OAuth2AccessToken accessToken = client.getAccessToken();
-        OAuth2RefreshToken refreshToken = client.getRefreshToken();
+        String providerAccessToken = client.getAccessToken().getTokenValue();
+        String providerRefreshToken = client.getRefreshToken().getTokenValue();
 
         //==============================
-        // Refresh-token 처리
+        // 로컬서버의 Refresh-token 처리
         //==============================
+        String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION); //refresh token생성
+        this.addRefreshTokenToCookie(request, response, refreshToken); // 토큰을 cookie로 보내기
+        clearAuthenticationAttributes(request, response);
+
+        //===================================
+        // Token 정보 DB에 저장
+        //====================================
         this.saveRefreshToken(user.getId(),
                 Provider.getCodeByName(clientRegistrationId),
-                accessToken.getTokenValue(),
-                refreshToken.getTokenValue()); //토큰을 DB에 저장
-        this.addRefreshTokenToCookie(request, response, refreshToken.getTokenValue()); // 토큰을 cookie로 보내기
-
-        clearAuthenticationAttributes(request, response);
+                refreshToken,
+                providerAccessToken,
+                providerRefreshToken);
 
         //==============================
         // 페이지 리다이렉트
         //==============================
-        //String accessToken = tokenProvider.generateToken(user, ACCESS_TOKEN_DURATION);
+        String accessToken = tokenProvider.generateToken(user, ACCESS_TOKEN_DURATION); //access token생성
         String targetUrl =  UriComponentsBuilder.fromUriString(REDIRECT_PATH)
-                .queryParam("token", accessToken.getTokenValue())
+                .queryParam("token", accessToken)
                 .build()
                 .toUriString();
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
-    private void saveRefreshToken(Long userId, String providerCd, String accessToken, String refreshToken ) {
-        OauthToken oauthToken = refreshTokenRepository.findByMbrUserIdAndProviderCd(userId, providerCd)
-                .map(entity -> entity.update(accessToken, refreshToken))
-                .orElse(new OauthToken(userId, providerCd, accessToken, refreshToken));
-        refreshTokenRepository.save(oauthToken);
+    private void saveRefreshToken(Long userId, String providerCd, String refreshToken, String providerAccessToken, String providerRefreshToken ) {
+        OauthToken oauthToken = oauthTokenRepository.findByMbrUserIdAndProviderCd(userId, providerCd)
+                .map(entity -> entity.update(refreshToken, providerAccessToken, providerRefreshToken))
+                .orElse(new OauthToken(userId, providerCd, refreshToken, providerAccessToken, providerRefreshToken));
+        oauthTokenRepository.save(oauthToken);
     }
 
     private void addRefreshTokenToCookie(HttpServletRequest request, HttpServletResponse response, String refreshToken) {

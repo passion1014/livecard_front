@@ -1,15 +1,11 @@
 package com.livecard.front.common.security.oauth;
 
 import com.livecard.front.common.security.oauth.service.OAuthService;
-import com.livecard.front.common.util.SecurityUtil;
-import com.livecard.front.domain.entity.MbrUserEntity;
-import com.livecard.front.domain.repository.RefreshTokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -34,15 +30,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         String authorizationHeader = request.getHeader(HEADER_AUTHORIZATION);
         String token = getAccessToken(authorizationHeader);
 
-        //if (tokenProvider.validToken(token)) {
-//        if (oAuthService.isValidAccessToken(token)) {
-//            Authentication authentication = tokenProvider.getAuthentication(token);
-//            SecurityContextHolder.getContext().setAuthentication(authentication);
-//        }
+        if (tokenProvider.validToken(token)) {
+            Authentication authentication = tokenProvider.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
 
-        MbrUserEntity mbrUserEntity = oAuthService.validateAccessToken(token);
-        Authentication authentication = tokenProvider.getAuthentication(token, mbrUserEntity);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        //MbrUserEntity mbrUserEntity = oAuthService.validateAccessToken(token);
+        //Authentication authentication = tokenProvider.getAuthentication(token, mbrUserEntity);
+        //SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }

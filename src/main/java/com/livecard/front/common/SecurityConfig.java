@@ -4,7 +4,7 @@ import com.livecard.front.common.security.oauth.*;
 import com.livecard.front.common.security.oauth.service.OAuthService;
 import com.livecard.front.common.util.CommUtil;
 import com.livecard.front.domain.repository.MbrUserRepository;
-import com.livecard.front.domain.repository.RefreshTokenRepository;
+import com.livecard.front.domain.repository.OauthTokenRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -17,7 +17,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
@@ -31,8 +30,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.context.SecurityContextPersistenceFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Arrays;
 
@@ -43,7 +40,7 @@ public class SecurityConfig {
 //    private final CustomUserDetailServiceImpl customUserDetailService;
     private final OAuth2UserCustomService oAuth2UserCustomService;
     private final TokenProvider tokenProvider;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final OauthTokenRepository oauthTokenRepository;
     private final ClientRegistrationRepository clientRegistrationRepository;
     private final MbrUserRepository mbrUserRepository;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
@@ -126,7 +123,7 @@ public class SecurityConfig {
     public OAuth2SuccessHandler oAuth2SuccessHandler() {
         return new OAuth2SuccessHandler(tokenProvider,
                 mbrUserRepository,
-                refreshTokenRepository,
+                oauthTokenRepository,
                 oAuth2AuthorizationRequestBasedOnCookieRepository(),
                 oAuth2AuthorizedClientService
         );

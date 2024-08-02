@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
-public class OauthToken {
+public class OauthToken extends SystemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,17 +21,21 @@ public class OauthToken {
     @Column(name = "PROVIDER_CD", length = 1, nullable = false)
     private String providerCd; // 제공자 (KAKAO=0, NAVER=1, GOOGLE=2)
 
-    @Column(name = "access_token", nullable = false)
-    private String accessToken;
-
     @Column(name = "REFRESH_TOKEN", nullable = false)
     private String refreshToken;
 
-    public OauthToken(Long mbrUserId, String providerCd, String accessToken, String refreshToken) {
+    @Column(name = "PROVIDER_ACCESS_TOKEN", nullable = false)
+    private String providerAccessToken;
+
+    @Column(name = "PROVIDER_REFRESH_TOKEN", nullable = false)
+    private String providerRefreshToken;
+
+    public OauthToken(Long mbrUserId, String providerCd, String refreshToken, String providerAccessToken, String providerRefreshToken) {
         this.mbrUserId = mbrUserId;
         this.providerCd = providerCd;
-        this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.providerAccessToken = providerAccessToken;
+        this.providerRefreshToken = providerRefreshToken;
     }
 
     public OauthToken update(String newRefreshToken) {
@@ -39,8 +43,16 @@ public class OauthToken {
         return this;
     }
 
-    public OauthToken update(String newAccessToken, String newRefreshToken) {
-        this.accessToken = newAccessToken;
+    public OauthToken update(String providerAccessToken, String providerRefreshToken) {
+        this.providerAccessToken = providerAccessToken;
+        this.providerRefreshToken = providerRefreshToken;
+        return this;
+    }
+
+    public OauthToken update(String refreshToken, String providerAccessToken, String providerRefreshToken) {
+        this.refreshToken = refreshToken;
+        this.providerAccessToken = providerAccessToken;
+        this.providerRefreshToken = providerRefreshToken;
         return this;
     }
 }

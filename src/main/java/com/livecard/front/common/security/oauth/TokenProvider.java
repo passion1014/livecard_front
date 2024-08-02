@@ -51,21 +51,10 @@ public class TokenProvider {
                 .compact();
     }
 
-//    public boolean validToken(String token) {
-//        try {
-//            Jwts.parser()
-//                    .setSigningKey(secretKey)
-//                    .build()
-//                    .parseClaimsJws(token);
-//            return true;
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
-
     public boolean validToken(String token) {
         try {
             Jwts.parser()
+                    .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -75,17 +64,19 @@ public class TokenProvider {
     }
 
 
-    public Authentication getAuthentication(String token, MbrUserEntity user) {
-//        Claims claims = getClaims(token);
+    public Authentication getAuthentication(String token) {
+        Claims claims = getClaims(token);
         //Set<SimpleGrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
         Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
 //        return new UsernamePasswordAuthenticationToken(new org.springframework.security.core.userdetails.User(claims.getSubject(), "", authorities)
 //                , token
 //                , authorities);
 
-        CustomUserDetails customUserDetails = new CustomUserDetails(user.getSocialId(), authorities.stream().toList());
 
-        //TODO: 데이터 없으면 throw하기
+        CustomUserDetails customUserDetails = new CustomUserDetails(claims.getSubject(), authorities.stream().toList());
+
+        //TODO: throw하기
+        MbrUserEntity user = mbrUserRepository.findBySocialId(claims.getSubject()).orElseThrow();
         customUserDetails.setMemberName(user.getName());
         customUserDetails.setId(user.getId());
         customUserDetails.setProviderCd(user.getProviderCd());

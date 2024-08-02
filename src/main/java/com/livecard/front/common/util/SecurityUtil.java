@@ -7,6 +7,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 public class SecurityUtil {
 
+    /**
+     *
+     * @return
+     */
     public static CustomUserDetails getUserDetails(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
@@ -23,7 +27,7 @@ public class SecurityUtil {
     /**
      * 로그인 된 사용자의 소셜인증 제공자 코드
      * (KAKAO=0, NAVER=1, GOOGLE=2)
-     * @return
+     * @return String
      */
     public static String getUserOauthProviderCd()  {
         CustomUserDetails customUserDetails = getUserDetails();
@@ -32,5 +36,18 @@ public class SecurityUtil {
             throw new SearchNotFoundException("No providerCd .");
         }
         return customUserDetails.getProviderCd();
+    }
+
+    /**
+     * UserID 조회
+     * @return Long
+     */
+    public static Long getMbrUserId()  {
+        CustomUserDetails customUserDetails = getUserDetails();
+        if (customUserDetails == null) {
+            //TODO:KJM 예외
+            throw new SearchNotFoundException("No providerCd .");
+        }
+        return customUserDetails.getId();
     }
 }
