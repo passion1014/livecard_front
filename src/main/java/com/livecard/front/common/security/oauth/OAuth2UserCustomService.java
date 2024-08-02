@@ -3,7 +3,6 @@ package com.livecard.front.common.security.oauth;
 
 import com.livecard.front.domain.entity.MbrUserEntity;
 import com.livecard.front.domain.repository.MbrUserRepository;
-import com.livecard.front.domain.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -19,7 +18,7 @@ import java.util.Map;
 public class OAuth2UserCustomService extends DefaultOAuth2UserService {
 
     private final MbrUserRepository mbrUserRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    //private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -65,7 +64,7 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
         }
 
         //================================================
-        // 프로필 정보 Insert or Update
+        // 프로필 정보를 MbrUser 테이블에 Insert or Update
         //================================================
         if (StringUtils.isEmpty(socialId)) {
             //TODO: throw

@@ -7,8 +7,10 @@ public interface OAuthService {
 
     public String getNewAccessToken(String providerCd, String refreshToken);
 
-    void unlinkUser(String providerCd, String accessToken);
+    public String createNewAccessToken(String refreshToken);
 
-    public MbrUserEntity validateAccessToken(String accessToken);
+    void unlinkUser();
+
+    //public MbrUserEntity validateAccessToken(String accessToken);
 }
 

@@ -30,12 +30,8 @@ public class OauthController {
     @PostMapping("/token")
     public ResponseEntity<String> getNewAccessToken(@RequestBody String refreshToken) {
         refreshToken = refreshToken.replaceAll("\"", "");
-
-        String providerCd = SecurityUtil.getUserOauthProviderCd(); //oauth 제공자
-        String newAccessToken = OAuthService.getNewAccessToken(providerCd, refreshToken);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(newAccessToken);
+        String newAccessToken = OAuthService.createNewAccessToken(refreshToken);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newAccessToken);
     }
 
     /**
@@ -46,17 +42,11 @@ public class OauthController {
      */
     @PostMapping("/unlink")
     public ResponseEntity<String>  unlink(HttpServletRequest request, HttpServletResponse response) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UsernamePasswordAuthenticationToken oauthToken = (UsernamePasswordAuthenticationToken) authentication;
-        CustomUserDetails customUserDetails = (CustomUserDetails)oauthToken.getPrincipal();
-
-        String providerCd = customUserDetails.getProviderCd(); //oauth 제공자
-        String accessToken = (String)oauthToken.getCredentials();
-
         // 사용자 연결 해제
-        OAuthService.unlinkUser(providerCd, accessToken);
+        OAuthService.unlinkUser();
 
         // 로그아웃 처리
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         new SecurityContextLogoutHandler().logout(request, response, authentication);
         return ResponseEntity.status(HttpStatus.OK).build();
 

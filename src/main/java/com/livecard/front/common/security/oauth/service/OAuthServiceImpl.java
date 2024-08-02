@@ -1,20 +1,16 @@
 package com.livecard.front.common.security.oauth.service;
 
-import com.livecard.front.common.RestTemplateConfig;
 import com.livecard.front.common.exception.SearchNotFoundException;
 import com.livecard.front.common.security.CustomUserDetails;
 import com.livecard.front.common.security.oauth.Provider;
 import com.livecard.front.common.security.oauth.TokenProvider;
-import com.livecard.front.common.service.RefreshTokenService;
 import com.livecard.front.common.util.SecurityUtil;
 import com.livecard.front.domain.entity.MbrUserEntity;
 import com.livecard.front.domain.entity.OauthToken;
 import com.livecard.front.domain.repository.MbrUserRepository;
-import com.livecard.front.domain.repository.RefreshTokenRepository;
+import com.livecard.front.domain.repository.OauthTokenRepository;
 import com.livecard.front.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,8 +18,6 @@ import org.springframework.http.*;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestTemplate;
@@ -32,11 +26,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 @RequiredArgsConstructor
 @Service
@@ -44,8 +34,7 @@ public class OAuthServiceImpl implements OAuthService {
     private static final Logger logger = LoggerFactory.getLogger(OAuthServiceImpl.class);
 
     private final TokenProvider tokenProvider;
-    private final RefreshTokenService refreshTokenService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final OauthTokenRepository oauthTokenRepository;
     private final MbrUserRepository mbrUserRepository;
     private final RestTemplate restTemplate;
     private final MemberService memberService;
@@ -105,26 +94,38 @@ public class OAuthServiceImpl implements OAuthService {
     }
 
 
-//    public String createNewAccessToken(String refreshToken) {
-//        // refresh token 유효성 검사해서 실패하면 예외 발생
-//        if(!tokenProvider.validToken(refreshToken)) {
-//            //TODO EXception변경
-//            throw new IllegalArgumentException("Unexpected token");
-//        }
-//
-//        Long userId = refreshTokenService.findByRefreshToken(refreshToken).getMbrUserId();
-//        //TODO: throw 일으키기
-//        MbrUserEntity mbrUserEntity = mbrUserRepository.findById(userId).orElseThrow();
-//
-//        return tokenProvider.generateToken(mbrUserEntity, Duration.ofHours(2));
-//    }
+    public String createNewAccessToken(String refreshToken) {
+        // refresh token 유효성 검사해서 실패하면 예외 발생
+        if(!tokenProvider.validToken(refreshToken)) {
+            //TODO EXception변경
+            throw new IllegalArgumentException("Unexpected token");
+        }
 
-    public void unlinkUser(String providerCd, String accessToken) {
-        //=====================
-        // 사용자 계정 삭제
-        //=====================
+        Long mbrUserId =  SecurityUtil.getMbrUserId();
+
+        //TODO: throw 일으키기
+        MbrUserEntity mbrUserEntity = mbrUserRepository.findById(mbrUserId).orElseThrow();
+
+        //TODO:KJM 토큰갱신정보 프로퍼티에서 가져오기
+        return tokenProvider.generateToken(mbrUserEntity, Duration.ofHours(2));
+    }
+
+    public void unlinkUser() {
+
         CustomUserDetails customUserDetails = SecurityUtil.getUserDetails();
-        long mbrUserId = customUserDetails.getId();
+        Long mbrUserId = customUserDetails.getId();
+        String providerCd = customUserDetails.getProviderCd(); //oauth 제공자
+
+        //============================
+        // Provider의 access token조회
+        //============================
+        OauthToken oauthToken = oauthTokenRepository.findByMbrUserIdAndProviderCd(mbrUserId, providerCd)
+                .orElseThrow(()->new SearchNotFoundException("no access token"));
+        String accessToken = oauthToken.getProviderAccessToken();
+
+        //=====================
+        // 사용자 계정관련 테이블 삭제
+        //=====================
         memberService.deleteMember(mbrUserId);
 
         //========================
@@ -154,57 +155,57 @@ public class OAuthServiceImpl implements OAuthService {
         sendHttpRequest(url, headers, entity, HttpMethod.POST);
     }
 
-    public MbrUserEntity validateAccessToken(String accessToken) {
-        Optional<OauthToken> optionalOauthToken = refreshTokenRepository.findByAccessToken(accessToken);
-        if (optionalOauthToken.isEmpty()) {
-            new SearchNotFoundException("no access token");
-        }
-
-        String providerCd = optionalOauthToken.get().getProviderCd();
-        HttpHeaders headers = new HttpHeaders();
-        String url = null;
-        String data = null;
-        HttpMethod httpMethod = null;
-
-        if (providerCd.equals(Provider.KAKAO.getCode())) {
-            url = kakaoTokenInfoUri;
-            httpMethod = HttpMethod.GET;
-            headers.setBearerAuth(accessToken);
-        }
-        else if (providerCd.equals(Provider.NAVER.getCode())) {
-            url = naverUserInfoUri;
-            httpMethod = HttpMethod.GET;
-            headers.setBearerAuth(accessToken);
-        }
-        else if (providerCd.equals(Provider.GOOGLE.getCode())) {
-            url = googleTokenInfoUri;
-            httpMethod = HttpMethod.POST;
-            data = "access_token=" + accessToken;
-        }
-        HttpEntity<String> entity = new HttpEntity<>(data, headers);
-        Map<String,?> responseBody = sendHttpRequest(url, headers, entity, httpMethod);
-
-        String socialId = null;
-        if (providerCd.equals(Provider.KAKAO.getCode())) {
-            socialId = String.valueOf(responseBody.get("id")); //socialId
-        }
-        else if (providerCd.equals(Provider.NAVER.getCode())) {
-            if (!"00".equals(responseBody.get("resultcode"))) {
-                //TODO:KJM 403 에러
-            }
-            Map<String, String> response = (Map<String, String>)responseBody.get("response");
-            socialId = String.valueOf(response.get("id")); //socialId
-        }
-        else if (providerCd.equals(Provider.GOOGLE.getCode())) {
-            socialId = String.valueOf(responseBody.get("sub")); //socialId
-        }
-
-        if (!"00".equals(responseBody.get("resultcode"))) {
-            //TODO:KJM 403 에러
-        }
-
-        return mbrUserRepository.findBySocialId(socialId).orElseThrow(() -> new SearchNotFoundException("Unexpected socialId"));
-    }
+//    public MbrUserEntity validateAccessToken(String accessToken) {
+//        Optional<OauthToken> optionalOauthToken = oauthTokenRepository.findByAccessToken(accessToken);
+//        if (optionalOauthToken.isEmpty()) {
+//            new SearchNotFoundException("no access token");
+//        }
+//
+//        String providerCd = optionalOauthToken.get().getProviderCd();
+//        HttpHeaders headers = new HttpHeaders();
+//        String url = null;
+//        String data = null;
+//        HttpMethod httpMethod = null;
+//
+//        if (providerCd.equals(Provider.KAKAO.getCode())) {
+//            url = kakaoTokenInfoUri;
+//            httpMethod = HttpMethod.GET;
+//            headers.setBearerAuth(accessToken);
+//        }
+//        else if (providerCd.equals(Provider.NAVER.getCode())) {
+//            url = naverUserInfoUri;
+//            httpMethod = HttpMethod.GET;
+//            headers.setBearerAuth(accessToken);
+//        }
+//        else if (providerCd.equals(Provider.GOOGLE.getCode())) {
+//            url = googleTokenInfoUri;
+//            httpMethod = HttpMethod.POST;
+//            data = "access_token=" + accessToken;
+//        }
+//        HttpEntity<String> entity = new HttpEntity<>(data, headers);
+//        Map<String,?> responseBody = sendHttpRequest(url, headers, entity, httpMethod);
+//
+//        String socialId = null;
+//        if (providerCd.equals(Provider.KAKAO.getCode())) {
+//            socialId = String.valueOf(responseBody.get("id")); //socialId
+//        }
+//        else if (providerCd.equals(Provider.NAVER.getCode())) {
+//            if (!"00".equals(responseBody.get("resultcode"))) {
+//                //TODO:KJM 403 에러
+//            }
+//            Map<String, String> response = (Map<String, String>)responseBody.get("response");
+//            socialId = String.valueOf(response.get("id")); //socialId
+//        }
+//        else if (providerCd.equals(Provider.GOOGLE.getCode())) {
+//            socialId = String.valueOf(responseBody.get("sub")); //socialId
+//        }
+//
+//        if (!"00".equals(responseBody.get("resultcode"))) {
+//            //TODO:KJM 403 에러
+//        }
+//
+//        return mbrUserRepository.findBySocialId(socialId).orElseThrow(() -> new SearchNotFoundException("Unexpected socialId"));
+//    }
 
     //add callback function as a parameter
     private Map<String,?> sendHttpRequest(String url, HttpHeaders headers, HttpEntity<String> entity, HttpMethod httpMethod) {
