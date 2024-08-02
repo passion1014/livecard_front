@@ -3,6 +3,7 @@ package com.livecard.front.common.security.oauth;
 
 import com.livecard.front.domain.entity.MbrUserEntity;
 import com.livecard.front.domain.repository.MbrUserRepository;
+import com.livecard.front.domain.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class OAuth2UserCustomService extends DefaultOAuth2UserService {
 
     private final MbrUserRepository mbrUserRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -25,9 +27,6 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
         OAuth2User user = super.loadUser(userRequest); // ❶ 요청을 바탕으로 유저 정보를 담은 객체 반환
 
         saveOrUpdate(user, provider);
-
-
-
         return user;
     }
 
@@ -36,7 +35,6 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
         String socialId = "";
         String name ;
         String profileImage;
-        String providerCd = null;
 
         //================================================
         // Provider 별로 프로필 정보 획득
@@ -47,7 +45,6 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
             socialId = String.valueOf(id);
             name = (String)properties.get("nickname");
             profileImage = (String)properties.get("profile_image");
-            providerCd = "0";
         }
         else if (Provider.NAVER.getName().equals(provider)) {
             Map<String, Object> attributes =  oAuth2User.getAttributes();
@@ -56,14 +53,12 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
             socialId = (String) response.get("id");
             profileImage = (String) response.get("profile_image");
             name = (String) response.get("name");
-            providerCd = "1";
         }
         else if (Provider.GOOGLE.getName().equals(provider)) {
             Map<String, Object> attributes = oAuth2User.getAttributes();
             socialId = oAuth2User.getAttribute("sub");
             name = oAuth2User.getAttribute("name");
             profileImage = oAuth2User.getAttribute("picture");
-            providerCd = "2";
         } else {
             profileImage = null;
             name = null;
@@ -76,23 +71,35 @@ public class OAuth2UserCustomService extends DefaultOAuth2UserService {
             //TODO: throw
             throw new OAuth2AuthenticationException("인증오류");
         }
-        else {
-            MbrUserEntity user = mbrUserRepository.findBySocialId(socialId)
-                    //User user = mbrUserRepository.findByEmail(email)
-                    .map(entity -> {
-                                entity.setName(name);
-                                entity.setProfileImg(profileImage);
-                                return entity;
-                            }
-                    )
-                    .orElse(MbrUserEntity.builder()
-                            .socialId(socialId)
-                            .name(name)
-                            .role("User")
-                            .providerCd(providerCd)
-                            .profileImg(profileImage)
-                            .build());
-            return mbrUserRepository.save(user);
-        }
+
+        MbrUserEntity user = mbrUserRepository.findBySocialId(socialId)
+                //User user = mbrUserRepository.findByEmail(email)
+                .map(entity -> {
+                            entity.setName(name);
+                            entity.setProfileImg(profileImage);
+                            return entity;
+                        }
+                )
+                .orElse(MbrUserEntity.builder()
+                        .socialId(socialId)
+                        .name(name)
+                        .role("User")
+                        .providerCd(Provider.getCodeByName(provider))
+                        .profileImg(profileImage)
+                        .build());
+
+        //user = mbrUserRepository.save(user);
+        return mbrUserRepository.save(user);
+
+//        //================================================
+//        // Token Insert or Update
+//        //================================================
+//        String refreshToken = (String)oAuth2User.getAttribute("refresh_token");
+//        RefreshToken refreshTokenEntiry = refreshTokenRepository.findByMbrUserIdAndProviderCd(user.getId(), providerCd)
+//                .map(entity -> entity.update(refreshToken))
+//                .orElse(new RefreshToken(user.getId(), providerCd, refreshToken));
+//        refreshTokenRepository.save(refreshTokenEntiry);
+//        return user;
     }
+
 }

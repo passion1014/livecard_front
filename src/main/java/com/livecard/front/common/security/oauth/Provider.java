@@ -12,4 +12,13 @@ public enum Provider {
 
     private final String name;
     private final String code;
+
+    public static String getCodeByName(String name) {
+        for (Provider provider : Provider.values()) {
+            if (provider.getName().equals(name)) {
+                return provider.getCode();
+            }
+        }
+        throw new IllegalArgumentException("Invalid provider name: " + name);
+    }
 }

@@ -1,8 +1,12 @@
 package com.livecard.front.common.service;
 
 
-import com.livecard.front.domain.entity.RefreshToken;
+import com.livecard.front.domain.entity.OauthToken;
 
 public interface RefreshTokenService {
-    public RefreshToken findByRefreshToken(String refreshToken);
+    public OauthToken findByRefreshToken(String refreshToken);
+
+    public void removeRefreshTokenByMbrUserId(Long mbrUserid);
+
+
 }
