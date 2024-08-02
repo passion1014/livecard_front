@@ -24,7 +24,7 @@ public class OauthToken {
     @Column(name = "access_token", nullable = false)
     private String accessToken;
 
-    @Column(name = "refresh_token", nullable = false)
+    @Column(name = "REFRESH_TOKEN", nullable = false)
     private String refreshToken;
 
     public OauthToken(Long mbrUserId, String providerCd, String accessToken, String refreshToken) {

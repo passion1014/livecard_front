@@ -16,5 +16,7 @@ public interface RefreshTokenRepository extends JpaRepository<OauthToken, Long> 
 
     void deleteByMbrUserId(Long mbrUserId);
 
+    Optional<OauthToken> findByMbrUserId(Long mbrUserId);
+
 }
 
