@@ -1,6 +1,6 @@
 package com.livecard.front.common.service;
 
-import com.livecard.front.domain.entity.RefreshToken;
+import com.livecard.front.domain.entity.OauthToken;
 import com.livecard.front.domain.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,9 +11,15 @@ import org.springframework.stereotype.Service;
 public class RefreshTokenServiceImpl implements RefreshTokenService{
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public RefreshToken findByRefreshToken(String refreshToken) {
+    @Override
+    public OauthToken findByRefreshToken(String refreshToken) {
         return refreshTokenRepository.findByRefreshToken(refreshToken)
                 //TODO: exception확인
                 .orElseThrow(() -> new IllegalArgumentException("Unexpected token"));
+    }
+
+    @Override
+    public void removeRefreshTokenByMbrUserId(Long mbrUserid) {
+        refreshTokenRepository.deleteByMbrUserId(mbrUserid);
     }
 }

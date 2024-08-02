@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
-public class RefreshToken {
+public class OauthToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,18 +18,29 @@ public class RefreshToken {
     @Column(name = "MBR_USER_ID", nullable = false, unique = true)
     private Long mbrUserId;
 
+    @Column(name = "PROVIDER_CD", length = 1, nullable = false)
+    private String providerCd; // 제공자 (KAKAO=0, NAVER=1, GOOGLE=2)
+
+    @Column(name = "access_token", nullable = false)
+    private String accessToken;
 
     @Column(name = "REFRESH_TOKEN", nullable = false)
     private String refreshToken;
 
-    public RefreshToken(Long mbrUserId, String refreshToken) {
+    public OauthToken(Long mbrUserId, String providerCd, String accessToken, String refreshToken) {
         this.mbrUserId = mbrUserId;
+        this.providerCd = providerCd;
+        this.accessToken = accessToken;
         this.refreshToken = refreshToken;
     }
 
-    public RefreshToken update(String newRefreshToken) {
+    public OauthToken update(String newRefreshToken) {
         this.refreshToken = newRefreshToken;
+        return this;
+    }
 
+    public OauthToken update(String newAccessToken, String newRefreshToken) {
+        this.accessToken = newAccessToken;
         return this;
     }
 }

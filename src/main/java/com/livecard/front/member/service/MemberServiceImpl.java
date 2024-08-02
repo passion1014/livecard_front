@@ -1,13 +1,17 @@
 package com.livecard.front.member.service;
 
+import com.livecard.front.common.security.CustomUserDetails;
+import com.livecard.front.common.util.SecurityUtil;
 import com.livecard.front.domain.entity.MbrUserEntity;
 import com.livecard.front.domain.repository.AstUserBalanceRepository;
 import com.livecard.front.domain.repository.MbrUserRepository;
+import com.livecard.front.domain.repository.RefreshTokenRepository;
 import com.livecard.front.dto.member.MemberBalanceDto;
 import com.livecard.front.dto.member.MemberDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -17,6 +21,7 @@ import java.util.Optional;
 public class MemberServiceImpl implements MemberService {
     private final MbrUserRepository mbrUserRepository;
     private final AstUserBalanceRepository astUserBalanceRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public Long getMemberId(String socialId) {
@@ -42,6 +47,17 @@ public class MemberServiceImpl implements MemberService {
         return memberDtoOptional;
     }
 
+    /**
+     * 회원삭제
+     * @param mbrUserId
+     */
+    @Transactional
+    @Override
+    public void deleteMember(Long mbrUserId) {
+        // Refresh-token 삭제
+        refreshTokenRepository.deleteByMbrUserId(mbrUserId);
+        //TODO: 멤버 테이블과 관련된 테이블 삭제 구현필요
+    }
 
 
     private MemberDto convertToDto(MbrUserEntity mbrUserEntity) {

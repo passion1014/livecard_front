@@ -84,6 +84,7 @@ dependencies {
 	implementation 'jakarta.servlet:jakarta.servlet-api:4.0.4'
 	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.3'
 	implementation group: 'com.github.ulisesbocchio', name: 'jasypt-spring-boot-starter', version: '3.0.5'
+	implementation group: 'org.apache.httpcomponents.client5', name: 'httpclient5', version: '5.3.1'
 
 }
 

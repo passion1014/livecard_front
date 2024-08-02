@@ -1,6 +1,7 @@
 package com.livecard.front.common;
 
 import com.livecard.front.common.security.oauth.*;
+import com.livecard.front.common.security.oauth.service.OAuthService;
 import com.livecard.front.common.util.CommUtil;
 import com.livecard.front.domain.repository.MbrUserRepository;
 import com.livecard.front.domain.repository.RefreshTokenRepository;
@@ -22,6 +23,7 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
@@ -42,9 +44,10 @@ public class SecurityConfig {
     private final OAuth2UserCustomService oAuth2UserCustomService;
     private final TokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    //private final MemberService memberService;
     private final ClientRegistrationRepository clientRegistrationRepository;
     private final MbrUserRepository mbrUserRepository;
+    private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    private final OAuthService oAuthService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -87,7 +90,7 @@ public class SecurityConfig {
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/error/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/auth/**", "/api/token").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -116,7 +119,7 @@ public class SecurityConfig {
 
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
-        return new TokenAuthenticationFilter(tokenProvider);
+        return new TokenAuthenticationFilter(tokenProvider, oAuthService);
     }
 
     @Bean
@@ -124,7 +127,8 @@ public class SecurityConfig {
         return new OAuth2SuccessHandler(tokenProvider,
                 mbrUserRepository,
                 refreshTokenRepository,
-                oAuth2AuthorizationRequestBasedOnCookieRepository()
+                oAuth2AuthorizationRequestBasedOnCookieRepository(),
+                oAuth2AuthorizedClientService
         );
     }
 
@@ -137,7 +141,6 @@ public class SecurityConfig {
     public final AuthenticationEntryPoint unauthorizedEntryPoint =
             (request, response, authException) -> {
                 CommUtil.handleRequestTypeError(request, response,
-
                         HttpStatus.UNAUTHORIZED.value(),
                         "Spring security unauthorized...");
             };
