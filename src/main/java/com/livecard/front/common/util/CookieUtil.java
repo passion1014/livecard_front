@@ -12,8 +12,10 @@ public class CookieUtil {
         Cookie cookie = new Cookie(name, value);
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+
+        //TODO: 개발 운영 https 환경에선 활성화 되어야 함
+        //cookie.setHttpOnly(true);
+        //cookie.setSecure(true);
 
         response.addCookie(cookie);
     }

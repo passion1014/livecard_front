@@ -26,7 +26,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain)  throws ServletException, IOException {
 
-
         String authorizationHeader = request.getHeader(HEADER_AUTHORIZATION);
         String token = getAccessToken(authorizationHeader);
 
@@ -34,11 +33,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             Authentication authentication = tokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
-
-        //MbrUserEntity mbrUserEntity = oAuthService.validateAccessToken(token);
-        //Authentication authentication = tokenProvider.getAuthentication(token, mbrUserEntity);
-        //SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }

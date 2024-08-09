@@ -103,13 +103,14 @@ public class OAuthServiceImpl implements OAuthService {
             throw new IllegalArgumentException("Unexpected token");
         }
 
-        Long mbrUserId =  SecurityUtil.getMbrUserId();
+        //TODO: throw 일으키기
+        Long mbrUserId =  oauthTokenRepository.findByRefreshToken(refreshToken).orElseThrow().getMbrUserId();
 
         //TODO: throw 일으키기
         MbrUserEntity mbrUserEntity = mbrUserRepository.findById(mbrUserId).orElseThrow();
 
         //TODO:KJM 토큰갱신정보 프로퍼티에서 가져오기
-        return tokenProvider.generateToken(mbrUserEntity, Duration.ofHours(2));
+        return tokenProvider.generateToken(mbrUserEntity, Duration.ofHours(Long.parseLong(accessTokenExpiration)));
     }
 
     public void unlinkUser() {
