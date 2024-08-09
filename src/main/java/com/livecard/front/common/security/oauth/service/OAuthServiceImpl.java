@@ -39,6 +39,8 @@ public class OAuthServiceImpl implements OAuthService {
     private final RestTemplate restTemplate;
     private final MemberService memberService;
 
+    @Value("${jwt.expiration}") String accessTokenExpiration;
+
     @Value("${spring.security.oauth2.client.provider.kakao.unlink-uri}") private String kakaoUnlinkUri;
     @Value("${spring.security.oauth2.client.provider.kakao.token-uri}") private String kakaoTokenUri;
     @Value("${spring.security.oauth2.client.provider.kakao.token-info-uri}") private String kakaoTokenInfoUri;

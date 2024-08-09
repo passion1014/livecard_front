@@ -85,11 +85,11 @@ spring:
             scope: email,profile
 
 jwt:
-  issuer: issuer@gmail.com
+  issuer: master@livecard.com
   secret-key: 462D4A614E645266556A586E3212357538782F313F4428472B4B625065536856
-  expiration: 60000 # 86400000 # 1 day
+  expiration: 1 # 1 hour
   refresh-token:
-    expiration: 604800000 # 7 days
+    expiration: 168 # 1 week
 cloud:
   aws:
     s3:

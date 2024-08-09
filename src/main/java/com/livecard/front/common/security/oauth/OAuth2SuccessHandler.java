@@ -8,6 +8,7 @@ import com.livecard.front.domain.repository.OauthTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -25,9 +26,9 @@ import java.util.Map;
 @Component
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
+    @Value("${jwt.expiration}") String accessTokenExpiration;
+    @Value("${jwt.refresh-token.expiration}") String refreshTokenExpiration;
     public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
-    public static final Duration REFRESH_TOKEN_DURATION = Duration.ofDays(14);
-    public static final Duration ACCESS_TOKEN_DURATION = Duration.ofDays(1);
 
     //TODO:개발기/운영기 주소 설정
     public static final String REDIRECT_PATH = "http://localhost:3000/loginCallback";
@@ -40,6 +41,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+
+        Duration durationOfAccessTokenExpiration = Duration.ofHours(Long.parseLong(accessTokenExpiration));
+        Duration  durationOfRefreshTokenExpiration = Duration.ofHours(Long.parseLong(refreshTokenExpiration));
+
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         Map<String, Object> responseAttribute = oAuth2User.getAttribute("response");
         String socialId = null;
@@ -63,12 +68,15 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String providerAccessToken = client.getAccessToken().getTokenValue();
         String providerRefreshToken = client.getRefreshToken().getTokenValue();
 
-        //==============================
-        // 로컬서버의 Refresh-token 처리
-        //==============================
-        String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION); //refresh token생성
-        this.addRefreshTokenToCookie(request, response, refreshToken); // 토큰을 cookie로 보내기
-        clearAuthenticationAttributes(request, response);
+        //==================================
+        // Refresh-token 생성 후 쿠키로 내보내기
+        //==================================
+        String refreshToken = tokenProvider.generateToken(user, durationOfRefreshTokenExpiration); //refresh token생성
+        int cookieMaxAge = (int) durationOfRefreshTokenExpiration.toSeconds();
+        CookieUtil.deleteCookie(request, response, REFRESH_TOKEN_COOKIE_NAME);
+        CookieUtil.addCookie(response, REFRESH_TOKEN_COOKIE_NAME, refreshToken, cookieMaxAge);
+        super.clearAuthenticationAttributes(request);
+        authorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 
         //===================================
         // Token 정보 DB에 저장
@@ -79,10 +87,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 providerAccessToken,
                 providerRefreshToken);
 
-        //==============================
-        // 페이지 리다이렉트
-        //==============================
-        String accessToken = tokenProvider.generateToken(user, ACCESS_TOKEN_DURATION); //access token생성
+        //==================================
+        // Access Token생성 후 페이지 리다이렉트
+        //==================================
+        String accessToken = tokenProvider.generateToken(user, durationOfAccessTokenExpiration); //access token생성
         String targetUrl =  UriComponentsBuilder.fromUriString(REDIRECT_PATH)
                 .queryParam("token", accessToken)
                 .build()
@@ -96,18 +104,5 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .orElse(new OauthToken(userId, providerCd, refreshToken, providerAccessToken, providerRefreshToken));
         oauthTokenRepository.save(oauthToken);
     }
-
-    private void addRefreshTokenToCookie(HttpServletRequest request, HttpServletResponse response, String refreshToken) {
-        int cookieMaxAge = (int) REFRESH_TOKEN_DURATION.toSeconds();
-
-        CookieUtil.deleteCookie(request, response, REFRESH_TOKEN_COOKIE_NAME);
-        CookieUtil.addCookie(response, REFRESH_TOKEN_COOKIE_NAME, refreshToken, cookieMaxAge);
-    }
-
-    private void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
-        super.clearAuthenticationAttributes(request);
-        authorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
-    }
-
 
 }
